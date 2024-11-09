@@ -230,6 +230,10 @@ const std::string RetPN::toString() const
     return rawstr.str();
 }
 
+const SVFFunction* VarArgPN::getFunction() const {
+    return callGraphNode->getFunction();
+}
+
 const std::string VarArgPN::getValueName() const
 {
     return callGraphNode->getName() + "_vararg";

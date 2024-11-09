@@ -780,6 +780,8 @@ public:
     /// Constructor
     VarArgPN(const CallGraphNode* node, NodeID i) : ValVar(nullptr, i, VarargNode), callGraphNode(node) {}
 
+    virtual const SVFFunction* getFunction() const;
+
     /// Return name of a LLVM value
     const std::string getValueName() const;
 
