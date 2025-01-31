@@ -27,7 +27,6 @@
  *      Author: Yulei Sui
  */
 
-#include "SVFIR/SVFModule.h"
 #include "Util/SVFUtil.h"
 #include "Graphs/SVFG.h"
 #include "Graphs/SVFGOPT.h"

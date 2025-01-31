@@ -36,8 +36,9 @@ using namespace SVFUtil;
 
 
 std::unique_ptr<SVFIR> SVFIR::pag;
+std::string SVFIR::pagReadFromTxt = "";
 
-SVFIR::SVFIR(bool buildFromFile) : IRGraph(buildFromFile), svfModule(nullptr), icfg(nullptr), chgraph(nullptr)
+SVFIR::SVFIR(bool buildFromFile) : IRGraph(buildFromFile), icfg(nullptr), chgraph(nullptr)
 {
 }
 
@@ -531,8 +532,6 @@ void SVFIR::destroy()
     icfg = nullptr;
     delete chgraph;
     chgraph = nullptr;
-    SVFModule::releaseSVFModule();
-    svfModule = nullptr;
     delete callGraph;
     callGraph = nullptr;
 }
@@ -679,4 +678,15 @@ void SVFIR::handleBlackHole(bool b)
 }
 
 
-
+const SVFFunction* SVFIR::getSVFFunction(const std::string& name)
+{
+    for (const auto& item : *callGraph)
+    {
+        const SVFFunction* fun = item.second->getFunction();
+        if (fun->getName() == name)
+        {
+            return fun;
+        }
+    }
+    return nullptr;
+}

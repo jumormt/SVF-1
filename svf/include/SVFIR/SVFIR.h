@@ -52,6 +52,7 @@ class SVFIR : public IRGraph
 
 public:
     typedef Set<const CallICFGNode*> CallSiteSet;
+    typedef std::vector<const SVFFunction*> FunctionSetType;
     typedef OrderedMap<const CallICFGNode*,NodeID> CallSiteToFunPtrMap;
     typedef Map<NodeID,CallSiteSet> FunPtrToCallSitesMap;
     typedef Map<NodeID,NodeBS> MemObjToFieldsMap;
@@ -96,11 +97,13 @@ private:
     /// Valid pointers for pointer analysis resolution connected by SVFIR edges (constraints)
     /// this set of candidate pointers can change during pointer resolution (e.g. adding new object nodes)
     OrderedNodeSet candidatePointers;
-    SVFModule* svfModule; /// SVF Module
     ICFG* icfg; // ICFG
     CommonCHGraph* chgraph; // class hierarchy graph
     CallSiteSet callSiteSet; /// all the callsites of a program
     CallGraph* callGraph; /// call graph
+
+    static std::string pagReadFromTxt;
+    std::string moduleIdentifier;
 
     static std::unique_ptr<SVFIR> pag;	///< Singleton pattern here to enable instance of SVFIR can only be created once.
 
@@ -127,6 +130,42 @@ public:
         pag = nullptr;
     }
     //@}
+
+    const SVFFunction* getSVFFunction(const std::string& name);
+
+    inline const std::string& getModuleIdentifier() const {
+        if (pagReadFromTxt.empty())
+        {
+            assert(!moduleIdentifier.empty() &&
+                   "No module found! Reading from a file other than LLVM-IR?");
+            return moduleIdentifier;
+        }
+        else
+        {
+            return pagReadFromTxt;
+        }
+    }
+
+    static inline std::string pagFileName()
+    {
+        return pagReadFromTxt;
+    }
+
+    static inline bool pagReadFromTXT()
+    {
+        return !pagReadFromTxt.empty();
+    }
+
+    static inline void setPagFromTXT(const std::string& txt)
+    {
+        pagReadFromTxt = txt;
+    }
+
+    inline void setModuleIdentifier(const std::string& moduleIdentifier)
+    {
+        this->moduleIdentifier = moduleIdentifier;
+    }
+
     /// Return memToFieldsMap
     inline MemObjToFieldsMap& getMemToFieldsMap()
     {
@@ -155,16 +194,7 @@ public:
     /// Whether to handle blackhole edge
     static void handleBlackHole(bool b);
     //@}
-    /// Set/Get LLVM Module
-    inline void setModule(SVFModule* mod)
-    {
-        svfModule = mod;
-    }
-    inline SVFModule* getModule()
-    {
-        assert(svfModule && "empty SVFModule! Build SVF IR first!");
-        return svfModule;
-    }
+
     /// Set/Get ICFG
     inline void setICFG(ICFG* i)
     {

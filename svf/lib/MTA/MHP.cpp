@@ -33,6 +33,7 @@
 #include "MTA/LockAnalysis.h"
 #include "Util/SVFUtil.h"
 #include "Util/PTAStat.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -143,9 +144,9 @@ void MHP::analyzeInterleaving()
  */
 void MHP::updateNonCandidateFunInterleaving()
 {
-    SVFModule* module = tct->getSVFModule();
-    for (const SVFFunction* fun : module->getFunctionSet())
+    for (const auto& item : *PAG::getPAG()->getCallGraph())
     {
+        const SVFFunction *fun = item.second->getFunction();
         if (!tct->isCandidateFun(fun) && !isExtCall(fun))
         {
             const ICFGNode* entryNode = fun->getEntryBlock()->front();

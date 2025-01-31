@@ -36,6 +36,7 @@
 #include "MTA/MTAStat.h"
 #include "WPA/Andersen.h"
 #include "Util/SVFUtil.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -60,11 +61,11 @@ MTA::~MTA()
  */
 bool MTA::runOnModule(SVFIR* pag)
 {
-    mhp = computeMHP(pag->getModule());
+    mhp = computeMHP();
     lsa = computeLocksets(mhp->getTCT());
 
     if(Options::RaceCheck())
-        detect(pag->getModule());
+        detect();
 
     return false;
 }
@@ -79,7 +80,7 @@ LockAnalysis* MTA::computeLocksets(TCT* tct)
     return lsa;
 }
 
-MHP* MTA::computeMHP(SVFModule* module)
+MHP* MTA::computeMHP()
 {
 
     DBOUT(DGENERAL, outs() << pasMsg("MTA analysis\n"));
@@ -125,7 +126,7 @@ MHP* MTA::computeMHP(SVFModule* module)
 // * when two memory access may-happen in parallel and are not protected by the same lock
 // * (excluding global constraints because they are initialized before running the main function)
 // */
-void MTA::detect(SVFModule* module)
+void MTA::detect()
 {
 
     DBOUT(DGENERAL, outs() << pasMsg("Starting Race Detection\n"));
@@ -136,8 +137,9 @@ void MTA::detect(SVFModule* module)
     PointerAnalysis* pta = AndersenWaveDiff::createAndersenWaveDiff(pag);
 
     // Add symbols for all of the functions and the instructions in them.
-    for (const SVFFunction* F : module->getFunctionSet())
+    for (const auto& item : *pag->getCallGraph())
     {
+        const SVFFunction* F = item.second->getFunction();
         // collect and create symbols inside the function body
         for (auto it : *F)
         {

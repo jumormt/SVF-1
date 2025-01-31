@@ -32,7 +32,7 @@
 #include "MTA/MTA.h"
 #include "Util/SVFUtil.h"
 #include "Util/PTAStat.h"
-
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -70,8 +70,9 @@ void LockAnalysis::collectLockUnlocksites()
 {
     ThreadCallGraph* tcg=tct->getThreadCallGraph();
 
-    for (const SVFFunction* F : tct->getSVFModule()->getFunctionSet())
+    for (const auto& item: *PAG::getPAG()->getCallGraph())
     {
+        const SVFFunction* F = item.second->getFunction();
         for (auto it : *F)
         {
             const SVFBasicBlock* bb = it.second;

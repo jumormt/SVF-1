@@ -117,9 +117,9 @@ void MTAStat::performMHPPairStat(MHP* mhp, LockAnalysis* lsa)
     {
         Set<const ICFGNode*> instSet1;
         Set<const ICFGNode*> instSet2;
-        SVFModule* mod = mhp->getTCT()->getSVFModule();
-        for (const SVFFunction* fun : mod->getFunctionSet())
+        for (const auto& item: *pag->getCallGraph())
         {
+            const SVFFunction* fun = item.second->getFunction();
             if(SVFUtil::isExtCall(fun))
                 continue;
             if(!mhp->isConnectedfromMain(fun))

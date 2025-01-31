@@ -29,7 +29,7 @@
 
 #include <queue>
 #include <algorithm>
-#include "SVFIR/SVFModule.h"
+#include "SVF-LLVM/SVFModule.h"
 #include "Util/SVFUtil.h"
 #include "SVF-LLVM/BasicTypes.h"
 #include "SVF-LLVM/LLVMUtil.h"
@@ -98,6 +98,8 @@ LLVMModuleSet::~LLVMModuleSet()
     }
     delete typeInference;
     typeInference = nullptr;
+    SVFModule::releaseSVFModule();
+    svfModule = nullptr;
 }
 
 ObjTypeInference* LLVMModuleSet::getTypeInference()
@@ -119,7 +121,7 @@ SVFModule* LLVMModuleSet::buildSVFModule(Module &mod)
     LLVMModuleSet* mset = getLLVMModuleSet();
 
     double startSVFModuleTime = SVFStat::getClk(true);
-    SVFModule::getSVFModule()->setModuleIdentifier(mod.getModuleIdentifier());
+    PAG::getPAG()->setModuleIdentifier(mod.getModuleIdentifier());
     mset->modules.emplace_back(mod);    // Populates `modules`; can get context via `this->getContext()`
     mset->loadExtAPIModules();          // Uses context from module through `this->getContext()`
     mset->build();
@@ -142,7 +144,7 @@ SVFModule* LLVMModuleSet::buildSVFModule(const std::vector<std::string> &moduleN
 
     if (!moduleNameVec.empty())
     {
-        SVFModule::getSVFModule()->setModuleIdentifier(moduleNameVec.front());
+        PAG::getPAG()->setModuleIdentifier(moduleNameVec.front());
     }
 
     mset->build();
@@ -159,7 +161,7 @@ SVFModule* LLVMModuleSet::buildSVFModule(const std::vector<std::string> &moduleN
 void LLVMModuleSet::buildSymbolTable() const
 {
     double startSymInfoTime = SVFStat::getClk(true);
-    if (!SVFModule::pagReadFromTXT())
+    if (!SVFIR::pagReadFromTXT())
     {
         /// building symbol table
         DBOUT(DGENERAL, SVFUtil::outs() << SVFUtil::pasMsg("Building Symbol table ...\n"));
@@ -189,8 +191,12 @@ void LLVMModuleSet::build()
     ICFGBuilder icfgbuilder;
     icfg = icfgbuilder.build();
 
+    svfir->setICFG(icfg);
+
     CallGraphBuilder callGraphBuilder;
-    callgraph = callGraphBuilder.buildSVFIRCallGraph(svfModule);
+    callgraph = callGraphBuilder.buildSVFIRCallGraph(svfModule->getFunctionSet());
+    svfir->setCallGraph(callgraph);
+
     for (const auto& func : svfModule->getFunctionSet())
     {
         SVFFunction* svffunc = const_cast<SVFFunction*>(func);
@@ -203,6 +209,7 @@ void LLVMModuleSet::build()
             SVFUtil::cast<Function>(getLLVMValue(it.second->getFunction())),
             it.second);
     }
+
 }
 
 void LLVMModuleSet::createSVFDataStructure()
@@ -547,7 +554,7 @@ void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
     }
     // We read SVFIR from a user-defined txt instead of parsing SVFIR from LLVM IR
     else
-        SVFModule::setPagFromTXT(Options::Graphtxt());
+        SVFIR::setPagFromTXT(Options::Graphtxt());
 
     //
     // LLVMContext objects separate global LLVM settings (from which e.g. types are

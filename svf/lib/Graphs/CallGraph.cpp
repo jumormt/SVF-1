@@ -30,7 +30,6 @@
 
 #include "Graphs/CallGraph.h"
 #include "SVFIR/SVFIR.h"
-#include "SVFIR/SVFModule.h"
 #include "Util/SVFUtil.h"
 #include <sstream>
 

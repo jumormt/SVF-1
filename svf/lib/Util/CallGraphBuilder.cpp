@@ -38,12 +38,12 @@
 using namespace SVF;
 using namespace SVFUtil;
 
-CallGraph* CallGraphBuilder::buildSVFIRCallGraph(SVFModule* svfModule)
+CallGraph* CallGraphBuilder::buildSVFIRCallGraph(const std::vector<const SVFFunction*>& funset)
 {
     CallGraph* callgraph = new CallGraph();
-    for (const SVFFunction* svfFunc: svfModule->getFunctionSet())
+    for (const auto& item: funset)
     {
-        callgraph->addCallGraphNode(svfFunc);
+        callgraph->addCallGraphNode(item);
     }
 
     for (const auto& item : *callgraph)

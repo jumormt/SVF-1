@@ -89,7 +89,7 @@ void LLVMLoopAnalysis::buildLLVMLoops(SVFModule *mod, ICFG* icfg)
 void LLVMLoopAnalysis::build(ICFG *icfg)
 {
     std::vector<const Loop *> llvmLoops;
-    buildLLVMLoops(PAG::getPAG()->getModule(), icfg);
+    buildLLVMLoops(SVFModule::getSVFModule(), icfg);
 }
 
 /*!
