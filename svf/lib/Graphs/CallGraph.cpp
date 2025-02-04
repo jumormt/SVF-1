@@ -42,6 +42,12 @@ CallGraph::CallSiteToIdMap CallGraph::csToIdMap;
 CallGraph::IdToCallSiteMap CallGraph::idToCSMap;
 CallSiteID CallGraph::totalCallSiteNum=1;
 
+
+const std::string &CallGraphNode::getName() const {
+    return fun->getName();
+}
+
+
 /// Add direct and indirect callsite
 //@{
 void CallGraphEdge::addDirectCallSite(const CallICFGNode* call)
@@ -77,6 +83,10 @@ const std::string CallGraphNode::toString() const
     std::stringstream  rawstr(str);
     rawstr << "PTACallGraphNode ID: " << getId() << " {fun: " << fun->getName() << "}";
     return rawstr.str();
+}
+
+const FunObjVar *CallGraph::getCallerOfCallSite(CallSiteID id) const {
+    return getCallSite(id)->getCaller();
 }
 
 bool CallGraphNode::isReachableFromProgEntry() const
@@ -195,7 +205,7 @@ CallGraphEdge* CallGraph::getGraphEdge(CallGraphNode* src,
 /*!
  * Add indirect call edge to update call graph
  */
-void CallGraph::addIndirectCallGraphEdge(const CallICFGNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
+void CallGraph::addIndirectCallGraphEdge(const CallICFGNode* cs,const FunObjVar* callerFun, const FunObjVar* calleeFun)
 {
 
     CallGraphNode* caller = getCallGraphNode(callerFun);
@@ -217,7 +227,7 @@ void CallGraph::addIndirectCallGraphEdge(const CallICFGNode* cs,const SVFFunctio
 /*!
  * Get all callsite invoking this callee
  */
-void CallGraph::getAllCallSitesInvokingCallee(const SVFFunction* callee, CallGraphEdge::CallInstSet& csSet)
+void CallGraph::getAllCallSitesInvokingCallee(const FunObjVar* callee, CallGraphEdge::CallInstSet& csSet)
 {
     CallGraphNode* callGraphNode = getCallGraphNode(callee);
     for(CallGraphNode::iterator it = callGraphNode->InEdgeBegin(), eit = callGraphNode->InEdgeEnd();
@@ -239,7 +249,7 @@ void CallGraph::getAllCallSitesInvokingCallee(const SVFFunction* callee, CallGra
 /*!
  * Get direct callsite invoking this callee
  */
-void CallGraph::getDirCallSitesInvokingCallee(const SVFFunction* callee, CallGraphEdge::CallInstSet& csSet)
+void CallGraph::getDirCallSitesInvokingCallee(const FunObjVar* callee, CallGraphEdge::CallInstSet& csSet)
 {
     CallGraphNode* callGraphNode = getCallGraphNode(callee);
     for(CallGraphNode::iterator it = callGraphNode->InEdgeBegin(), eit = callGraphNode->InEdgeEnd();
@@ -256,7 +266,7 @@ void CallGraph::getDirCallSitesInvokingCallee(const SVFFunction* callee, CallGra
 /*!
  * Get indirect callsite invoking this callee
  */
-void CallGraph::getIndCallSitesInvokingCallee(const SVFFunction* callee, CallGraphEdge::CallInstSet& csSet)
+void CallGraph::getIndCallSitesInvokingCallee(const FunObjVar* callee, CallGraphEdge::CallInstSet& csSet)
 {
     CallGraphNode* callGraphNode = getCallGraphNode(callee);
     for(CallGraphNode::iterator it = callGraphNode->InEdgeBegin(), eit = callGraphNode->InEdgeEnd();
@@ -283,7 +293,7 @@ void CallGraph::verifyCallGraph()
         if (targets.empty() == false)
         {
             const CallICFGNode* cs = it->first;
-            const SVFFunction* func = cs->getCaller();
+            const FunObjVar* func = cs->getCaller();
             if (getCallGraphNode(func)->isReachableFromProgEntry() == false)
                 writeWrnMsg(func->getName() + " has indirect call site but not reachable from main");
         }
@@ -293,7 +303,7 @@ void CallGraph::verifyCallGraph()
 /*!
  * Whether its reachable between two functions
  */
-bool CallGraph::isReachableBetweenFunctions(const SVFFunction* srcFn, const SVFFunction* dstFn) const
+bool CallGraph::isReachableBetweenFunctions(const FunObjVar* srcFn, const FunObjVar* dstFn) const
 {
     CallGraphNode* dstNode = getCallGraphNode(dstFn);
 
@@ -338,7 +348,7 @@ void CallGraph::view()
 /*!
  * Add call graph node
  */
-void CallGraph::addCallGraphNode(const SVFFunction* fun)
+void CallGraph::addCallGraphNode(const FunObjVar* fun)
 {
     NodeID id  = callGraphNodeNum;
     CallGraphNode*callGraphNode = new CallGraphNode(id, fun);
@@ -360,7 +370,7 @@ const CallGraphNode* CallGraph::getCallGraphNode(const std::string& name)
 /*!
  * Add direct call edges
  */
-void CallGraph::addDirectCallGraphEdge(const CallICFGNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
+void CallGraph::addDirectCallGraphEdge(const CallICFGNode* cs,const FunObjVar* callerFun, const FunObjVar* calleeFun)
 {
 
     CallGraphNode* caller = getCallGraphNode(callerFun);
@@ -406,7 +416,7 @@ struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits
 
     static std::string getNodeAttributes(CallGraphNode*node, CallGraph*)
     {
-        const SVFFunction* fun = node->getFunction();
+        const FunObjVar* fun = node->getFunction();
         if (!SVFUtil::isExtCall(fun))
         {
             return "shape=box";
