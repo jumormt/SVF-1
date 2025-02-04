@@ -91,8 +91,10 @@ SVFIR* SVFIRBuilder::build()
     /// build callgraph
     CallGraphBuilder callGraphBuilder;
     std::vector<const FunObjVar*> funset;
-    for (const auto& item: llvmModuleSet()->LLVMFun2FunObjVar) {
-        funset.push_back(item.second);
+    for (const auto& item: svfModule->getFunctionSet()) {
+        const Function* llvmFun = SVFUtil::cast<Function>(llvmModuleSet()->getLLVMValue(item));
+
+        funset.push_back(llvmModuleSet()->getFunObjVar(llvmFun));
     }
     pag->callGraph = callGraphBuilder.buildSVFIRCallGraph(funset);
 
